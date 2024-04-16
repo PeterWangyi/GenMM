@@ -27,35 +27,33 @@ from nearest_neighbor.losses import PatchCoherentLoss
 from dataset.blender_motion import BlenderMotion
 
 bl_info = {
-    "name" : "GenMM",
-    "author" : "Weiyu Li",
-    "description" : "Blender addon for SIGGRAPH paper 'Example-Based Motion Synthesis via Generative Motion Matching'",
-    "blender" : (3, 2, 0),
-    "version" : (0, 0, 1),
+    "name": "GenMM",
+    "author": "Weiyu Li",
+    "description": "Blender addon for SIGGRAPH paper 'Example-Based Motion Synthesis via Generative Motion Matching'",
+    "blender": (3, 6, 0),
+    "version": (0, 0, 1),
     "location": "3D View",
     "description": "Synthesis novel motions form a few exemplars.",
-    "location" : "",
-    "support": "TESTING",
-    "warning" : "",
-    "category" : "Generic"
+    "category": "Animation",
 }
 
 
 # This function is modified from
 # https://github.com/bwrsandman/blender-addons/blob/master/io_anim_bvh
-def get_bvh_data(context,
-                 frame_end,
-                 frame_start,
-                 global_scale=1.0,
-                 rotate_mode='NATIVE',
-                 root_transform_only=False,
-                 ):
+def get_bvh_data(
+    context,
+    frame_end,
+    frame_start,
+    global_scale=1.0,
+    rotate_mode="NATIVE",
+    root_transform_only=False,
+):
 
     def ensure_rot_order(rot_order_str):
-        if set(rot_order_str) != {'X', 'Y', 'Z'}:
+        if set(rot_order_str) != {"X", "Y", "Z"}:
             rot_order_str = "XYZ"
         return rot_order_str
-    
+
     file_str = []
 
     obj = context.object
@@ -106,11 +104,25 @@ def get_bvh_data(context,
             file_str.append("%sROOT %s\n" % (indent_str, bone_name))
 
         file_str.append("%s{\n" % indent_str)
-        file_str.append("%s\tOFFSET %.6f %.6f %.6f\n" % (indent_str, loc.x * global_scale, loc.y * global_scale, loc.z * global_scale))
+        file_str.append(
+            "%s\tOFFSET %.6f %.6f %.6f\n"
+            % (
+                indent_str,
+                loc.x * global_scale,
+                loc.y * global_scale,
+                loc.z * global_scale,
+            )
+        )
         if (bone.use_connect or root_transform_only) and bone.parent:
-            file_str.append("%s\tCHANNELS 3 %srotation %srotation %srotation\n" % (indent_str, rot_order_str[0], rot_order_str[1], rot_order_str[2]))
+            file_str.append(
+                "%s\tCHANNELS 3 %srotation %srotation %srotation\n"
+                % (indent_str, rot_order_str[0], rot_order_str[1], rot_order_str[2])
+            )
         else:
-            file_str.append("%s\tCHANNELS 6 Xposition Yposition Zposition %srotation %srotation %srotation\n" % (indent_str, rot_order_str[0], rot_order_str[1], rot_order_str[2]))
+            file_str.append(
+                "%s\tCHANNELS 6 Xposition Yposition Zposition %srotation %srotation %srotation\n"
+                % (indent_str, rot_order_str[0], rot_order_str[1], rot_order_str[2])
+            )
 
         if my_children:
             # store the location for the children
@@ -126,7 +138,15 @@ def get_bvh_data(context,
             file_str.append("%s\tEnd Site\n" % indent_str)
             file_str.append("%s\t{\n" % indent_str)
             loc = bone.tail_local - node_locations[bone_name]
-            file_str.append("%s\t\tOFFSET %.6f %.6f %.6f\n" % (indent_str, loc.x * global_scale, loc.y * global_scale, loc.z * global_scale))
+            file_str.append(
+                "%s\t\tOFFSET %.6f %.6f %.6f\n"
+                % (
+                    indent_str,
+                    loc.x * global_scale,
+                    loc.y * global_scale,
+                    loc.z * global_scale,
+                )
+            )
             file_str.append("%s\t}\n" % indent_str)
 
         file_str.append("%s}\n" % indent_str)
@@ -149,7 +169,9 @@ def get_bvh_data(context,
         file_str.append("ROOT %s\n" % key)
         file_str.append("{\n")
         file_str.append("\tOFFSET 0.0 0.0 0.0\n")
-        file_str.append("\tCHANNELS 0\n")  # Xposition Yposition Zposition Xrotation Yrotation Zrotation
+        file_str.append(
+            "\tCHANNELS 0\n"
+        )  # Xposition Yposition Zposition Xrotation Yrotation Zrotation
         indent = 1
 
         # Write children
@@ -158,7 +180,7 @@ def get_bvh_data(context,
             write_recursive_nodes(child_bone, indent)
 
         file_str.append("}\n")
-    file_str = ''.join(file_str)
+    file_str = "".join(file_str)
     # redefine bones as sorted by serialized_names
     # so we can write motion
 
@@ -194,12 +216,12 @@ def get_bvh_data(context,
         )
 
         _eul_order_lookup = {
-            'XYZ': (0, 1, 2),
-            'XZY': (0, 2, 1),
-            'YXZ': (1, 0, 2),
-            'YZX': (1, 2, 0),
-            'ZXY': (2, 0, 1),
-            'ZYX': (2, 1, 0),
+            "XYZ": (0, 1, 2),
+            "XZY": (0, 2, 1),
+            "YXZ": (1, 0, 2),
+            "YZX": (1, 2, 0),
+            "ZXY": (2, 0, 1),
+            "ZYX": (2, 1, 0),
         }
 
         def __init__(self, bone_name):
@@ -228,7 +250,9 @@ def get_bvh_data(context,
 
             self.parent = None
             self.prev_euler = Euler((0.0, 0.0, 0.0), self.rot_order_str_reverse)
-            self.skip_position = ((self.rest_bone.use_connect or root_transform_only) and self.rest_bone.parent)
+            self.skip_position = (
+                self.rest_bone.use_connect or root_transform_only
+            ) and self.rest_bone.parent
 
         def update_posedata(self):
             self.pose_mat = self.pose_bone.matrix
@@ -236,9 +260,9 @@ def get_bvh_data(context,
 
         def __repr__(self):
             if self.parent:
-                return "[\"%s\" child on \"%s\"]\n" % (self.name, self.parent.name)
+                return '["%s" child on "%s"]\n' % (self.name, self.parent.name)
             else:
-                return "[\"%s\" root bone]\n" % (self.name)
+                return '["%s" root bone]\n' % (self.name)
 
     bones_decorated = [DecoratedBone(bone_name) for bone_name in serialized_names]
 
@@ -256,7 +280,9 @@ def get_bvh_data(context,
 
     file_str += "MOTION\n"
     file_str += "Frames: %d\n" % (frame_end - frame_start + 1)
-    file_str += "Frame Time: %.6f\n" % (1.0 / (scene.render.fps / scene.render.fps_base))
+    file_str += "Frame Time: %.6f\n" % (
+        1.0 / (scene.render.fps / scene.render.fps_base)
+    )
 
     for frame in range(frame_start, frame_end + 1):
         scene.frame_set(frame)
@@ -269,9 +295,16 @@ def get_bvh_data(context,
             itrans = Matrix.Translation(-dbone.rest_bone.head_local)
 
             if dbone.parent:
-                mat_final = dbone.parent.rest_arm_mat @ dbone.parent.pose_imat @ dbone.pose_mat @ dbone.rest_arm_imat
+                mat_final = (
+                    dbone.parent.rest_arm_mat
+                    @ dbone.parent.pose_imat
+                    @ dbone.pose_mat
+                    @ dbone.rest_arm_imat
+                )
                 mat_final = itrans @ mat_final @ trans
-                loc = mat_final.to_translation() + (dbone.rest_bone.head_local - dbone.parent.rest_bone.head_local)
+                loc = mat_final.to_translation() + (
+                    dbone.rest_bone.head_local - dbone.parent.rest_bone.head_local
+                )
             else:
                 mat_final = dbone.pose_mat @ dbone.rest_arm_imat
                 mat_final = itrans @ mat_final @ trans
@@ -283,7 +316,11 @@ def get_bvh_data(context,
             if not dbone.skip_position:
                 file_str += "%.6f %.6f %.6f " % (loc * global_scale)[:]
 
-            file_str += "%.6f %.6f %.6f " % (degrees(rot[dbone.rot_order[0]]), degrees(rot[dbone.rot_order[1]]), degrees(rot[dbone.rot_order[2]]))
+            file_str += "%.6f %.6f %.6f " % (
+                degrees(rot[dbone.rot_order[0]]),
+                degrees(rot[dbone.rot_order[1]]),
+                degrees(rot[dbone.rot_order[2]]),
+            )
 
             dbone.prev_euler = rot
 
@@ -297,52 +334,54 @@ def get_bvh_data(context,
 class BVH_Node:
     __slots__ = (
         # Bvh joint name.
-        'name',
+        "name",
         # BVH_Node type or None for no parent.
-        'parent',
+        "parent",
         # A list of children of this type..
-        'children',
+        "children",
         # Worldspace rest location for the head of this node.
-        'rest_head_world',
+        "rest_head_world",
         # Localspace rest location for the head of this node.
-        'rest_head_local',
+        "rest_head_local",
         # Worldspace rest location for the tail of this node.
-        'rest_tail_world',
+        "rest_tail_world",
         # Worldspace rest location for the tail of this node.
-        'rest_tail_local',
+        "rest_tail_local",
         # List of 6 ints, -1 for an unused channel,
         # otherwise an index for the BVH motion data lines,
         # loc triple then rot triple.
-        'channels',
+        "channels",
         # A triple of indices as to the order rotation is applied.
         # [0,1,2] is x/y/z - [None, None, None] if no rotation..
-        'rot_order',
+        "rot_order",
         # Same as above but a string 'XYZ' format..
-        'rot_order_str',
+        "rot_order_str",
         # A list one tuple's one for each frame: (locx, locy, locz, rotx, roty, rotz),
         # euler rotation ALWAYS stored xyz order, even when native used.
-        'anim_data',
+        "anim_data",
         # Convenience function, bool, same as: (channels[0] != -1 or channels[1] != -1 or channels[2] != -1).
-        'has_loc',
+        "has_loc",
         # Convenience function, bool, same as: (channels[3] != -1 or channels[4] != -1 or channels[5] != -1).
-        'has_rot',
+        "has_rot",
         # Index from the file, not strictly needed but nice to maintain order.
-        'index',
+        "index",
         # Use this for whatever you want.
-        'temp',
+        "temp",
     )
 
     _eul_order_lookup = {
-        (None, None, None): 'XYZ',  # XXX Dummy one, no rotation anyway!
-        (0, 1, 2): 'XYZ',
-        (0, 2, 1): 'XZY',
-        (1, 0, 2): 'YXZ',
-        (1, 2, 0): 'YZX',
-        (2, 0, 1): 'ZXY',
-        (2, 1, 0): 'ZYX',
+        (None, None, None): "XYZ",  # XXX Dummy one, no rotation anyway!
+        (0, 1, 2): "XYZ",
+        (0, 2, 1): "XZY",
+        (1, 0, 2): "YXZ",
+        (1, 2, 0): "YZX",
+        (2, 0, 1): "ZXY",
+        (2, 1, 0): "ZYX",
     }
 
-    def __init__(self, name, rest_head_world, rest_head_local, parent, channels, rot_order, index):
+    def __init__(
+        self, name, rest_head_world, rest_head_local, parent, channels, rot_order, index
+    ):
         self.name = name
         self.rest_head_world = rest_head_world
         self.rest_head_local = rest_head_local
@@ -366,7 +405,8 @@ class BVH_Node:
 
     def __repr__(self):
         return (
-            "BVH name: '%s', rest_loc:(%.3f,%.3f,%.3f), rest_tail:(%.3f,%.3f,%.3f)" % (
+            "BVH name: '%s', rest_loc:(%.3f,%.3f,%.3f), rest_tail:(%.3f,%.3f,%.3f)"
+            % (
                 self.name,
                 *self.rest_head_world,
                 *self.rest_head_world,
@@ -380,18 +420,18 @@ def sorted_nodes(bvh_nodes):
     return bvh_nodes_list
 
 
-def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
+def read_bvh(context, bvh_str, rotate_mode="XYZ", global_scale=1.0):
     # Separate into a list of lists, each line a list of words.
     file_lines = bvh_str
     # Non standard carriage returns?
     if len(file_lines) == 1:
-        file_lines = file_lines[0].split('\r')
+        file_lines = file_lines[0].split("\r")
 
     # Split by whitespace.
     file_lines = [ll for ll in [l.split() for l in file_lines] if ll]
 
     # Create hierarchy as empties
-    if file_lines[0][0].lower() == 'hierarchy':
+    if file_lines[0][0].lower() == "hierarchy":
         # print 'Importing the BVH Hierarchy for:', file_path
         pass
     else:
@@ -406,11 +446,11 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
 
     lineIdx = 0  # An index for the file.
     while lineIdx < len(file_lines) - 1:
-        if file_lines[lineIdx][0].lower() in {'root', 'joint'}:
+        if file_lines[lineIdx][0].lower() in {"root", "joint"}:
 
             # Join spaces into 1 word with underscores joining it.
             if len(file_lines[lineIdx]) > 2:
-                file_lines[lineIdx][1] = '_'.join(file_lines[lineIdx][1:])
+                file_lines[lineIdx][1] = "_".join(file_lines[lineIdx][1:])
                 file_lines[lineIdx] = file_lines[lineIdx][:2]
 
             # MAY NEED TO SUPPORT MULTIPLE ROOTS HERE! Still unsure weather multiple roots are possible?
@@ -421,11 +461,13 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
             # print '%snode: %s, parent: %s' % (len(bvh_nodes_serial) * '  ', name,  bvh_nodes_serial[-1])
 
             lineIdx += 2  # Increment to the next line (Offset)
-            rest_head_local = global_scale * Vector((
-                float(file_lines[lineIdx][1]),
-                float(file_lines[lineIdx][2]),
-                float(file_lines[lineIdx][3]),
-            ))
+            rest_head_local = global_scale * Vector(
+                (
+                    float(file_lines[lineIdx][1]),
+                    float(file_lines[lineIdx][2]),
+                    float(file_lines[lineIdx][3]),
+                )
+            )
             lineIdx += 1  # Increment to the next line (Channels)
 
             # newChannel[Xposition, Yposition, Zposition, Xrotation, Yrotation, Zrotation]
@@ -438,22 +480,22 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
             for channel in file_lines[lineIdx][2:]:
                 channel = channel.lower()
                 channelIndex += 1  # So the index points to the right channel
-                if channel == 'xposition':
+                if channel == "xposition":
                     my_channel[0] = channelIndex
-                elif channel == 'yposition':
+                elif channel == "yposition":
                     my_channel[1] = channelIndex
-                elif channel == 'zposition':
+                elif channel == "zposition":
                     my_channel[2] = channelIndex
 
-                elif channel == 'xrotation':
+                elif channel == "xrotation":
                     my_channel[3] = channelIndex
                     my_rot_order[rot_count] = 0
                     rot_count += 1
-                elif channel == 'yrotation':
+                elif channel == "yrotation":
                     my_channel[4] = channelIndex
                     my_rot_order[rot_count] = 1
                     rot_count += 1
-                elif channel == 'zrotation':
+                elif channel == "zrotation":
                     my_channel[5] = channelIndex
                     my_rot_order[rot_count] = 2
                     rot_count += 1
@@ -483,23 +525,32 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
 
         # Account for an end node.
         # There is sometimes a name after 'End Site' but we will ignore it.
-        if file_lines[lineIdx][0].lower() == 'end' and file_lines[lineIdx][1].lower() == 'site':
+        if (
+            file_lines[lineIdx][0].lower() == "end"
+            and file_lines[lineIdx][1].lower() == "site"
+        ):
             # Increment to the next line (Offset)
             lineIdx += 2
-            rest_tail = global_scale * Vector((
-                float(file_lines[lineIdx][1]),
-                float(file_lines[lineIdx][2]),
-                float(file_lines[lineIdx][3]),
-            ))
+            rest_tail = global_scale * Vector(
+                (
+                    float(file_lines[lineIdx][1]),
+                    float(file_lines[lineIdx][2]),
+                    float(file_lines[lineIdx][3]),
+                )
+            )
 
-            bvh_nodes_serial[-1].rest_tail_world = bvh_nodes_serial[-1].rest_head_world + rest_tail
-            bvh_nodes_serial[-1].rest_tail_local = bvh_nodes_serial[-1].rest_head_local + rest_tail
+            bvh_nodes_serial[-1].rest_tail_world = (
+                bvh_nodes_serial[-1].rest_head_world + rest_tail
+            )
+            bvh_nodes_serial[-1].rest_tail_local = (
+                bvh_nodes_serial[-1].rest_head_local + rest_tail
+            )
 
             # Just so we can remove the parents in a uniform way,
             # the end has kids so this is a placeholder.
             bvh_nodes_serial.append(None)
 
-        if len(file_lines[lineIdx]) == 1 and file_lines[lineIdx][0] == '}':  # == ['}']
+        if len(file_lines[lineIdx]) == 1 and file_lines[lineIdx][0] == "}":  # == ['}']
             bvh_nodes_serial.pop()  # Remove the last item
 
         # End of the hierarchy. Begin the animation section of the file with
@@ -507,19 +558,19 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
         #  MOTION
         #  Frames: n
         #  Frame Time: dt
-        if len(file_lines[lineIdx]) == 1 and file_lines[lineIdx][0].lower() == 'motion':
+        if len(file_lines[lineIdx]) == 1 and file_lines[lineIdx][0].lower() == "motion":
             lineIdx += 1  # Read frame count.
             if (
-                    len(file_lines[lineIdx]) == 2 and
-                    file_lines[lineIdx][0].lower() == 'frames:'
+                len(file_lines[lineIdx]) == 2
+                and file_lines[lineIdx][0].lower() == "frames:"
             ):
                 bvh_frame_count = int(file_lines[lineIdx][1])
 
             lineIdx += 1  # Read frame rate.
             if (
-                    len(file_lines[lineIdx]) == 3 and
-                    file_lines[lineIdx][0].lower() == 'frame' and
-                    file_lines[lineIdx][1].lower() == 'time:'
+                len(file_lines[lineIdx]) == 3
+                and file_lines[lineIdx][0].lower() == "frame"
+                and file_lines[lineIdx][1].lower() == "time:"
             ):
                 bvh_frame_time = float(file_lines[lineIdx][2])
 
@@ -580,7 +631,9 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
                 bvh_node.rest_tail_local = Vector(bvh_node.rest_head_local)
             elif len(bvh_node.children) == 1:
                 bvh_node.rest_tail_world = Vector(bvh_node.children[0].rest_head_world)
-                bvh_node.rest_tail_local = bvh_node.rest_head_local + bvh_node.children[0].rest_head_local
+                bvh_node.rest_tail_local = (
+                    bvh_node.rest_head_local + bvh_node.children[0].rest_head_local
+                )
             else:
                 # allow this, see above
                 # if not bvh_node.children:
@@ -593,11 +646,17 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
                     rest_tail_world += bvh_node_child.rest_head_world
                     rest_tail_local += bvh_node_child.rest_head_local
 
-                bvh_node.rest_tail_world = rest_tail_world * (1.0 / len(bvh_node.children))
-                bvh_node.rest_tail_local = rest_tail_local * (1.0 / len(bvh_node.children))
+                bvh_node.rest_tail_world = rest_tail_world * (
+                    1.0 / len(bvh_node.children)
+                )
+                bvh_node.rest_tail_local = rest_tail_local * (
+                    1.0 / len(bvh_node.children)
+                )
 
         # Make sure tail isn't the same location as the head.
-        if (bvh_node.rest_tail_local - bvh_node.rest_head_local).length <= 0.001 * global_scale:
+        if (
+            bvh_node.rest_tail_local - bvh_node.rest_head_local
+        ).length <= 0.001 * global_scale:
             print("\tzero length node found:", bvh_node.name)
             bvh_node.rest_tail_local.y = bvh_node.rest_tail_local.y + global_scale / 10
             bvh_node.rest_tail_world.y = bvh_node.rest_tail_world.y + global_scale / 10
@@ -605,7 +664,9 @@ def read_bvh(context, bvh_str, rotate_mode='XYZ', global_scale=1.0):
     return bvh_nodes, bvh_frame_time, bvh_frame_count
 
 
-def bvh_node_dict2objects(context, bvh_name, bvh_nodes, rotate_mode='NATIVE', frame_start=1, IMPORT_LOOP=False):
+def bvh_node_dict2objects(
+    context, bvh_name, bvh_nodes, rotate_mode="NATIVE", frame_start=1, IMPORT_LOOP=False
+):
 
     if frame_start < 1:
         frame_start = 1
@@ -623,7 +684,7 @@ def bvh_node_dict2objects(context, bvh_name, bvh_nodes, rotate_mode='NATIVE', fr
         obj.select_set(True)
 
         # nicer drawing.
-        obj.empty_display_type = 'CUBE'
+        obj.empty_display_type = "CUBE"
         obj.empty_display_size = 0.1
 
         return obj
@@ -646,7 +707,7 @@ def bvh_node_dict2objects(context, bvh_name, bvh_nodes, rotate_mode='NATIVE', fr
     # Add tail objects
     for name, bvh_node in bvh_nodes.items():
         if not bvh_node.children:
-            ob_end = add_ob(name + '_end')
+            ob_end = add_ob(name + "_end")
             ob_end.parent = bvh_node.temp
             ob_end.location = bvh_node.rest_tail_world - bvh_node.rest_head_world
 
@@ -659,25 +720,29 @@ def bvh_node_dict2objects(context, bvh_name, bvh_nodes, rotate_mode='NATIVE', fr
 
             if bvh_node.has_loc:
                 obj.delta_location = Vector((lx, ly, lz)) - bvh_node.rest_head_world
-                obj.keyframe_insert("delta_location", index=-1, frame=frame_start + frame_current)
+                obj.keyframe_insert(
+                    "delta_location", index=-1, frame=frame_start + frame_current
+                )
 
             if bvh_node.has_rot:
                 obj.delta_rotation_euler = rx, ry, rz
-                obj.keyframe_insert("delta_rotation_euler", index=-1, frame=frame_start + frame_current)
+                obj.keyframe_insert(
+                    "delta_rotation_euler", index=-1, frame=frame_start + frame_current
+                )
 
     return objects
 
 
 def bvh_node_dict2armature(
-        context,
-        bvh_name,
-        bvh_nodes,
-        bvh_frame_time,
-        rotate_mode='XYZ',
-        frame_start=1,
-        IMPORT_LOOP=False,
-        global_matrix=None,
-        use_fps_scale=False,
+    context,
+    bvh_name,
+    bvh_nodes,
+    bvh_frame_time,
+    rotate_mode="XYZ",
+    frame_start=1,
+    IMPORT_LOOP=False,
+    global_matrix=None,
+    use_fps_scale=False,
 ):
 
     if frame_start < 1:
@@ -696,8 +761,8 @@ def bvh_node_dict2armature(
     arm_ob.select_set(True)
     context.view_layer.objects.active = arm_ob
 
-    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
-    bpy.ops.object.mode_set(mode='EDIT', toggle=False)
+    bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
+    bpy.ops.object.mode_set(mode="EDIT", toggle=False)
 
     bvh_nodes_list = sorted_nodes(bvh_nodes)
 
@@ -752,10 +817,10 @@ def bvh_node_dict2armature(
             bvh_node.temp.parent = bvh_node.parent.temp
 
             # Set the connection state
-            if(
-                    (not bvh_node.has_loc) and
-                    (bvh_node.parent.temp.name not in ZERO_AREA_BONES) and
-                    (bvh_node.parent.rest_tail_local == bvh_node.rest_head_local)
+            if (
+                (not bvh_node.has_loc)
+                and (bvh_node.parent.temp.name not in ZERO_AREA_BONES)
+                and (bvh_node.parent.rest_tail_local == bvh_node.rest_head_local)
             ):
                 bvh_node.temp.use_connect = True
 
@@ -767,18 +832,20 @@ def bvh_node_dict2armature(
     # Now Apply the animation to the armature
 
     # Get armature animation data
-    bpy.ops.object.mode_set(mode='OBJECT', toggle=False)
+    bpy.ops.object.mode_set(mode="OBJECT", toggle=False)
 
     pose = arm_ob.pose
     pose_bones = pose.bones
 
-    if rotate_mode == 'NATIVE':
+    if rotate_mode == "NATIVE":
         for bvh_node in bvh_nodes_list:
-            bone_name = bvh_node.temp  # may not be the same name as the bvh_node, could have been shortened.
+            bone_name = (
+                bvh_node.temp
+            )  # may not be the same name as the bvh_node, could have been shortened.
             pose_bone = pose_bones[bone_name]
             pose_bone.rotation_mode = bvh_node.rot_order_str
 
-    elif rotate_mode != 'QUATERNION':
+    elif rotate_mode != "QUATERNION":
         for pose_bone in pose_bones:
             pose_bone.rotation_mode = rotate_mode
     else:
@@ -795,7 +862,9 @@ def bvh_node_dict2armature(
     # With a tuple  (pose_bone, armature_bone, bone_rest_matrix, bone_rest_matrix_inv)
     num_frame = 0
     for bvh_node in bvh_nodes_list:
-        bone_name = bvh_node.temp  # may not be the same name as the bvh_node, could have been shortened.
+        bone_name = (
+            bvh_node.temp
+        )  # may not be the same name as the bvh_node, could have been shortened.
         pose_bone = pose_bones[bone_name]
         rest_bone = arm_data.bones[bone_name]
         bone_rest_matrix = rest_bone.matrix_local.to_3x3()
@@ -843,13 +912,17 @@ def bvh_node_dict2armature(
                 bvh_loc = bvh_node.anim_data[frame_i + skip_frame][:3]
 
                 bone_translate_matrix = Matrix.Translation(
-                    Vector(bvh_loc) - bvh_node.rest_head_local)
-                location[frame_i] = (bone_rest_matrix_inv @
-                                     bone_translate_matrix).to_translation()
+                    Vector(bvh_loc) - bvh_node.rest_head_local
+                )
+                location[frame_i] = (
+                    bone_rest_matrix_inv @ bone_translate_matrix
+                ).to_translation()
 
             # For each location x, y, z.
             for axis_i in range(3):
-                curve = action.fcurves.new(data_path=data_path, index=axis_i, action_group=bvh_node.name)
+                curve = action.fcurves.new(
+                    data_path=data_path, index=axis_i, action_group=bvh_node.name
+                )
                 keyframe_points = curve.keyframe_points
                 keyframe_points.add(num_frame)
 
@@ -863,14 +936,12 @@ def bvh_node_dict2armature(
             data_path = None
             rotate = None
 
-            if 'QUATERNION' == rotate_mode:
+            if "QUATERNION" == rotate_mode:
                 rotate = [(1.0, 0.0, 0.0, 0.0)] * num_frame
-                data_path = ('pose.bones["%s"].rotation_quaternion'
-                             % pose_bone.name)
+                data_path = 'pose.bones["%s"].rotation_quaternion' % pose_bone.name
             else:
                 rotate = [(0.0, 0.0, 0.0)] * num_frame
-                data_path = ('pose.bones["%s"].rotation_euler' %
-                             pose_bone.name)
+                data_path = 'pose.bones["%s"].rotation_euler' % pose_bone.name
 
             prev_euler = Euler((0.0, 0.0, 0.0))
             for frame_i in range(num_frame):
@@ -881,21 +952,22 @@ def bvh_node_dict2armature(
                 euler = Euler(bvh_rot, bvh_node.rot_order_str[::-1])
                 bone_rotation_matrix = euler.to_matrix().to_4x4()
                 bone_rotation_matrix = (
-                    bone_rest_matrix_inv @
-                    bone_rotation_matrix @
-                    bone_rest_matrix
+                    bone_rest_matrix_inv @ bone_rotation_matrix @ bone_rest_matrix
                 )
 
                 if len(rotate[frame_i]) == 4:
                     rotate[frame_i] = bone_rotation_matrix.to_quaternion()
                 else:
                     rotate[frame_i] = bone_rotation_matrix.to_euler(
-                        pose_bone.rotation_mode, prev_euler)
+                        pose_bone.rotation_mode, prev_euler
+                    )
                     prev_euler = rotate[frame_i]
 
             # For each euler angle x, y, z (or quaternion w, x, y, z).
             for axis_i in range(len(rotate[0])):
-                curve = action.fcurves.new(data_path=data_path, index=axis_i, action_group=bvh_node.name)
+                curve = action.fcurves.new(
+                    data_path=data_path, index=axis_i, action_group=bvh_node.name
+                )
                 keyframe_points = curve.keyframe_points
                 keyframe_points.add(num_frame)
 
@@ -910,7 +982,7 @@ def bvh_node_dict2armature(
             pass  # 2.5 doenst have cyclic now?
 
         for bez in cu.keyframe_points:
-            bez.interpolation = 'LINEAR'
+            bez.interpolation = "LINEAR"
 
     # finally apply matrix
     try:
@@ -923,25 +995,27 @@ def bvh_node_dict2armature(
 
 
 def load(
-        context,
-        bvh_str,
-        *,
-        target='ARMATURE',
-        rotate_mode='NATIVE',
-        global_scale=1.0,
-        use_cyclic=False,
-        frame_start=1,
-        global_matrix=None,
-        use_fps_scale=False,
-        update_scene_fps=False,
-        update_scene_duration=False,
-        report=print,
+    context,
+    bvh_str,
+    *,
+    target="ARMATURE",
+    rotate_mode="NATIVE",
+    global_scale=1.0,
+    use_cyclic=False,
+    frame_start=1,
+    global_matrix=None,
+    use_fps_scale=False,
+    update_scene_fps=False,
+    update_scene_duration=False,
+    report=print,
 ):
     import time
+
     t1 = time.time()
 
     bvh_nodes, bvh_frame_time, bvh_frame_count = read_bvh(
-        context, bvh_str,
+        context,
+        bvh_str,
         rotate_mode=rotate_mode,
         global_scale=global_scale,
     )
@@ -954,10 +1028,10 @@ def load(
     # Broken BVH handling: guess frame rate when it is not contained in the file.
     if bvh_frame_time is None:
         report(
-            {'WARNING'},
+            {"WARNING"},
             "The BVH file does not contain frame duration in its MOTION "
             "section, assuming the BVH and Blender scene have the same "
-            "frame rate"
+            "frame rate",
         )
         bvh_frame_time = scene.render.fps_base / scene.render.fps
         # No need to scale the frame rate, as they're equal now anyway.
@@ -971,16 +1045,21 @@ def load(
         use_fps_scale = False
 
     if update_scene_duration:
-        _update_scene_duration(context, report, bvh_frame_count, bvh_frame_time, frame_start, use_fps_scale)
+        _update_scene_duration(
+            context, report, bvh_frame_count, bvh_frame_time, frame_start, use_fps_scale
+        )
 
     t1 = time.time()
     print("\timporting to blender...", end="")
 
-    bvh_name = bpy.path.display_name_from_filepath('synsized')
+    bvh_name = bpy.path.display_name_from_filepath("synsized")
 
-    if target == 'ARMATURE':
+    if target == "ARMATURE":
         bvh_node_dict2armature(
-            context, bvh_name, bvh_nodes, bvh_frame_time,
+            context,
+            bvh_name,
+            bvh_nodes,
+            bvh_frame_time,
             rotate_mode=rotate_mode,
             frame_start=frame_start,
             IMPORT_LOOP=use_cyclic,
@@ -988,9 +1067,11 @@ def load(
             use_fps_scale=use_fps_scale,
         )
 
-    elif target == 'OBJECT':
+    elif target == "OBJECT":
         bvh_node_dict2objects(
-            context, bvh_name, bvh_nodes,
+            context,
+            bvh_name,
+            bvh_nodes,
             rotate_mode=rotate_mode,
             frame_start=frame_start,
             IMPORT_LOOP=use_cyclic,
@@ -998,14 +1079,17 @@ def load(
         )
 
     else:
-        report({'ERROR'}, tip_("Invalid target %r (must be 'ARMATURE' or 'OBJECT')") % target)
-        return {'CANCELLED'}
+        report(
+            {"ERROR"},
+            tip_("Invalid target %r (must be 'ARMATURE' or 'OBJECT')") % target,
+        )
+        return {"CANCELLED"}
 
-    print('Done in %.4f\n' % (time.time() - t1))
+    print("Done in %.4f\n" % (time.time() - t1))
 
     context.scene.frame_set(frame_orig)
 
-    return {'FINISHED'}
+    return {"FINISHED"}
 
 
 def _update_scene_fps(context, report, bvh_frame_time):
@@ -1014,7 +1098,7 @@ def _update_scene_fps(context, report, bvh_frame_time):
     # Broken BVH handling: prevent division by zero.
     if bvh_frame_time == 0.0:
         report(
-            {'WARNING'},
+            {"WARNING"},
             "Unable to update scene frame rate, as the BVH file "
             "contains a zero frame duration in its MOTION section",
         )
@@ -1031,13 +1115,13 @@ def _update_scene_fps(context, report, bvh_frame_time):
 
 
 def _update_scene_duration(
-        context, report, bvh_frame_count, bvh_frame_time, frame_start,
-        use_fps_scale):
+    context, report, bvh_frame_count, bvh_frame_time, frame_start, use_fps_scale
+):
     """Extend the scene's duration so that the BVH file fits in its entirety."""
 
     if bvh_frame_count is None:
         report(
-            {'WARNING'},
+            {"WARNING"},
             "Unable to extend the scene duration, as the BVH file does not "
             "contain the number of frames in its MOTION section",
         )
@@ -1068,12 +1152,14 @@ def set_smooth_shading(mesh: bpy.types.Mesh) -> None:
 
 # This function is from
 # https://github.com/yuki-koyama/blender-cli-rendering
-def create_mesh_from_pydata(scene: bpy.types.Scene,
-                            vertices: Iterable[Iterable[float]],
-                            faces: Iterable[Iterable[int]],
-                            mesh_name: str,
-                            object_name: str,
-                            use_smooth: bool = True) -> bpy.types.Object:
+def create_mesh_from_pydata(
+    scene: bpy.types.Scene,
+    vertices: Iterable[Iterable[float]],
+    faces: Iterable[Iterable[int]],
+    mesh_name: str,
+    object_name: str,
+    use_smooth: bool = True,
+) -> bpy.types.Object:
     # Add a new mesh and set vertices and faces
     # Note: In this case, it does not require to set edges.
     # Note: After manipulating mesh data, update() needs to be called.
@@ -1091,30 +1177,40 @@ def create_mesh_from_pydata(scene: bpy.types.Scene,
 
 # This function is from
 # https://github.com/yuki-koyama/blender-cli-rendering
-def add_subdivision_surface_modifier(mesh_object: bpy.types.Object, level: int, is_simple: bool = False) -> None:
-    '''
+def add_subdivision_surface_modifier(
+    mesh_object: bpy.types.Object, level: int, is_simple: bool = False
+) -> None:
+    """
     https://docs.blender.org/api/current/bpy.types.SubsurfModifier.html
-    '''
+    """
 
-    modifier: bpy.types.SubsurfModifier = mesh_object.modifiers.new(name="Subsurf", type='SUBSURF')
+    modifier: bpy.types.SubsurfModifier = mesh_object.modifiers.new(
+        name="Subsurf", type="SUBSURF"
+    )
 
     modifier.levels = level
     modifier.render_levels = level
-    modifier.subdivision_type = 'SIMPLE' if is_simple else 'CATMULL_CLARK'
+    modifier.subdivision_type = "SIMPLE" if is_simple else "CATMULL_CLARK"
 
 
 # This function is from
 # https://github.com/yuki-koyama/blender-cli-rendering
-def create_armature_mesh(scene: bpy.types.Scene, armature_object: bpy.types.Object, mesh_name: str) -> bpy.types.Object:
-    assert armature_object.type == 'ARMATURE', 'Error'
-    assert len(armature_object.data.bones) != 0, 'Error'
+def create_armature_mesh(
+    scene: bpy.types.Scene, armature_object: bpy.types.Object, mesh_name: str
+) -> bpy.types.Object:
+    assert armature_object.type == "ARMATURE", "Error"
+    assert len(armature_object.data.bones) != 0, "Error"
 
-    def add_rigid_vertex_group(target_object: bpy.types.Object, name: str, vertex_indices: Iterable[int]) -> None:
+    def add_rigid_vertex_group(
+        target_object: bpy.types.Object, name: str, vertex_indices: Iterable[int]
+    ) -> None:
         new_vertex_group = target_object.vertex_groups.new(name=name)
         for vertex_index in vertex_indices:
-            new_vertex_group.add([vertex_index], 1.0, 'REPLACE')
+            new_vertex_group.add([vertex_index], 1.0, "REPLACE")
 
-    def generate_bone_mesh_pydata(radius: float, length: float) -> Tuple[List[mathutils.Vector], List[List[int]]]:
+    def generate_bone_mesh_pydata(
+        radius: float, length: float
+    ) -> Tuple[List[mathutils.Vector], List[List[int]]]:
         base_radius = radius
         top_radius = 0.5 * radius
 
@@ -1124,16 +1220,14 @@ def create_armature_mesh(scene: bpy.types.Scene, armature_object: bpy.types.Obje
             mathutils.Vector((+base_radius, 0.0, +base_radius)),
             mathutils.Vector((+base_radius, 0.0, -base_radius)),
             mathutils.Vector((-base_radius, 0.0, -base_radius)),
-
             # Cross section of the top part
             mathutils.Vector((-top_radius, length, +top_radius)),
             mathutils.Vector((+top_radius, length, +top_radius)),
             mathutils.Vector((+top_radius, length, -top_radius)),
             mathutils.Vector((-top_radius, length, -top_radius)),
-
             # End points
             mathutils.Vector((0.0, -base_radius, 0.0)),
-            mathutils.Vector((0.0, length + top_radius, 0.0))
+            mathutils.Vector((0.0, length + top_radius, 0.0)),
         ]
 
         faces = [
@@ -1142,13 +1236,11 @@ def create_armature_mesh(scene: bpy.types.Scene, armature_object: bpy.types.Obje
             [8, 2, 1],
             [8, 3, 2],
             [8, 0, 3],
-
             # End point for the top part
             [9, 4, 5],
             [9, 5, 6],
             [9, 6, 7],
             [9, 7, 4],
-
             # Side faces
             [0, 1, 5, 4],
             [1, 2, 6, 5],
@@ -1170,34 +1262,42 @@ def create_armature_mesh(scene: bpy.types.Scene, armature_object: bpy.types.Obje
 
         vertex_index_offset = len(vertices)
 
-        temp_vertex_group = {'name': bone.name, 'vertex_indices': []}
+        temp_vertex_group = {"name": bone.name, "vertex_indices": []}
         for local_index, vertex in enumerate(temp_vertices):
             vertices.append(bone.matrix_local @ vertex)
-            temp_vertex_group['vertex_indices'].append(local_index + vertex_index_offset)
+            temp_vertex_group["vertex_indices"].append(
+                local_index + vertex_index_offset
+            )
         vertex_groups.append(temp_vertex_group)
 
         for face in temp_faces:
             if len(face) == 3:
-                faces.append([
-                    face[0] + vertex_index_offset,
-                    face[1] + vertex_index_offset,
-                    face[2] + vertex_index_offset,
-                ])
+                faces.append(
+                    [
+                        face[0] + vertex_index_offset,
+                        face[1] + vertex_index_offset,
+                        face[2] + vertex_index_offset,
+                    ]
+                )
             else:
-                faces.append([
-                    face[0] + vertex_index_offset,
-                    face[1] + vertex_index_offset,
-                    face[2] + vertex_index_offset,
-                    face[3] + vertex_index_offset,
-                ])
+                faces.append(
+                    [
+                        face[0] + vertex_index_offset,
+                        face[1] + vertex_index_offset,
+                        face[2] + vertex_index_offset,
+                        face[3] + vertex_index_offset,
+                    ]
+                )
 
     new_object = create_mesh_from_pydata(scene, vertices, faces, mesh_name, mesh_name)
     new_object.matrix_world = armature_object.matrix_world
 
     for vertex_group in vertex_groups:
-        add_rigid_vertex_group(new_object, vertex_group['name'], vertex_group['vertex_indices'])
+        add_rigid_vertex_group(
+            new_object, vertex_group["name"], vertex_group["vertex_indices"]
+        )
 
-    armature_modifier = new_object.modifiers.new('Armature', 'ARMATURE')
+    armature_modifier = new_object.modifiers.new("Armature", "ARMATURE")
     armature_modifier.object = armature_object
     armature_modifier.use_vertex_groups = True
 
@@ -1205,11 +1305,11 @@ def create_armature_mesh(scene: bpy.types.Scene, armature_object: bpy.types.Obje
     add_subdivision_surface_modifier(new_object, 2, is_simple=False)
 
     # Set the armature as the parent of the new object
-    bpy.ops.object.select_all(action='DESELECT')
+    bpy.ops.object.select_all(action="DESELECT")
     new_object.select_set(True)
     armature_object.select_set(True)
     bpy.context.view_layer.objects.active = armature_object
-    bpy.ops.object.parent_set(type='OBJECT')
+    bpy.ops.object.parent_set(type="OBJECT")
 
     return new_object
 
@@ -1228,7 +1328,7 @@ class OP_AddMesh(bpy.types.Operator):
         name = bpy.context.object.name + "_proxy"
         create_armature_mesh(bpy.context.scene, bpy.context.object, name)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class OP_RunSynthesis(bpy.types.Operator):
@@ -1250,37 +1350,65 @@ class OP_RunSynthesis(bpy.types.Operator):
         end_frame = end_frame if setting.end_frame == -1 else end_frame
 
         bvh_str = get_bvh_data(context, frame_start=start_frame, frame_end=end_frame)
-        frames_str, frame_time_str =  bvh_str.split('MOTION\n')[1].split('\n')[:2]
-        motion_data_str = bvh_str.split('MOTION\n')[1].split('\n')[2:-1]
-        motion_data = np.array([item.strip().split(' ') for item in motion_data_str], dtype=np.float32)
-        
-        motion = [BlenderMotion(motion_data, repr='repr6d', use_velo=True, keep_up_pos=True, up_axis=setting.up_axis, padding_last=False)]
-        model = GenMM(device='cuda' if torch.cuda.is_available() else 'cpu', silent=True)
-        criteria = PatchCoherentLoss(patch_size=setting.patch_size, 
-                                     alpha=setting.alpha, 
-                                     loop=setting.loop, cache=True)
-    
-        syn = model.run(motion, criteria,
-                        num_frames=str(setting.num_syn_frames),
-                        num_steps=setting.num_steps,
-                        noise_sigma=setting.noise,
-                        patch_size=setting.patch_size, 
-                        coarse_ratio=f'{setting.coarse_ratio}x_nframes',
-                        pyr_factor=setting.pyr_factor)
-        motion_data_str = [' '.join(str(x) for x in item) for item in motion[0].parse(syn)]
-        
-        load(context, bvh_str.split('MOTION\n')[0].split('\n')+['MOTION']+[frames_str]+[frame_time_str]+motion_data_str)
+        frames_str, frame_time_str = bvh_str.split("MOTION\n")[1].split("\n")[:2]
+        motion_data_str = bvh_str.split("MOTION\n")[1].split("\n")[2:-1]
+        motion_data = np.array(
+            [item.strip().split(" ") for item in motion_data_str], dtype=np.float32
+        )
+
+        motion = [
+            BlenderMotion(
+                motion_data,
+                repr="repr6d",
+                use_velo=True,
+                keep_up_pos=True,
+                up_axis=setting.up_axis,
+                padding_last=False,
+            )
+        ]
+        model = GenMM(
+            device="cuda" if torch.cuda.is_available() else "cpu", silent=True
+        )
+        criteria = PatchCoherentLoss(
+            patch_size=setting.patch_size,
+            alpha=setting.alpha,
+            loop=setting.loop,
+            cache=True,
+        )
+
+        syn = model.run(
+            motion,
+            criteria,
+            num_frames=str(setting.num_syn_frames),
+            num_steps=setting.num_steps,
+            noise_sigma=setting.noise,
+            patch_size=setting.patch_size,
+            coarse_ratio=f"{setting.coarse_ratio}x_nframes",
+            pyr_factor=setting.pyr_factor,
+        )
+        motion_data_str = [
+            " ".join(str(x) for x in item) for item in motion[0].parse(syn)
+        ]
+
+        load(
+            context,
+            bvh_str.split("MOTION\n")[0].split("\n")
+            + ["MOTION"]
+            + [frames_str]
+            + [frame_time_str]
+            + motion_data_str,
+        )
         # name = bpy.context.object.name + "_proxy"
         # create_armature_mesh(bpy.context.scene, bpy.context.object, name)
 
-        return {'FINISHED'}
+        return {"FINISHED"}
 
 
 class GENMM_PT_ControlPanel(bpy.types.Panel):
 
     bl_label = "GenMM"
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
     bl_category = "GenMM"
 
     @classmethod
@@ -1289,7 +1417,7 @@ class GENMM_PT_ControlPanel(bpy.types.Panel):
 
     def draw_header(self, context: bpy.types.Context):
         layout = self.layout
-        layout.label(text="", icon='PLUGIN')
+        layout.label(text="", icon="PLUGIN")
 
     def draw(self, context: bpy.types.Context):
         layout = self.layout
@@ -1300,7 +1428,7 @@ class GENMM_PT_ControlPanel(bpy.types.Panel):
         ]
         for op in ops:
             layout.operator(op.bl_idname, text=op.bl_label)
-        
+
         box = layout.box()
         box.label(text="Exemplar config:")
         exemplar_row = box.row()
@@ -1328,59 +1456,62 @@ class GENMM_PT_ControlPanel(bpy.types.Panel):
 
 
 class PropertyGroup(bpy.types.PropertyGroup):
-    '''Property container for options and paths of GenMM'''
+    """Property container for options and paths of GenMM"""
+
     start_frame: bpy.props.IntProperty(
         name="Start Frame",
         description="Start Frame of the Exemplar Moition.",
-        default=1)
+        default=1,
+    )
     end_frame: bpy.props.IntProperty(
-        name="End Frame",
-        description="End Frame of the Exemplar Moition.",
-        default=-1)
+        name="End Frame", description="End Frame of the Exemplar Moition.", default=-1
+    )
     up_axis: bpy.props.EnumProperty(
-            name="Up Axis", 
-            default='Z_UP',
-            description="Up axis of the Exemplar Moition",
-            items=[('Z_UP', "Z-Up", 'Z Up'),
-                   ('Y_UP', "Y-Up", 'Y Up'),
-                   ('X_UP', "X-Up", 'X Up'),
-                   ]
-            )
+        name="Up Axis",
+        default="Z_UP",
+        description="Up axis of the Exemplar Moition",
+        items=[
+            ("Z_UP", "Z-Up", "Z Up"),
+            ("Y_UP", "Y-Up", "Y Up"),
+            ("X_UP", "X-Up", "X Up"),
+        ],
+    )
     noise: bpy.props.FloatProperty(
         name="Noise Intensity",
         description="Intensity of Noise Added to the Synthesized Motion.",
-        default=10)
+        default=10,
+    )
     num_syn_frames: bpy.props.IntProperty(
         name="Num. of Frames",
         description="Number of the Synthesized Motion.",
-        default=600)
+        default=600,
+    )
     patch_size: bpy.props.IntProperty(
-        name="Patch Size",
-        description="Size for Patch Extraction.",
-        min=7,
-        default=15)
+        name="Patch Size", description="Size for Patch Extraction.", min=7, default=15
+    )
     coarse_ratio: bpy.props.FloatProperty(
         name="Coarse Ratio",
         description="Ratio of the Coarest Pyramid.",
         min=0.0,
-        default=0.2)
+        default=0.2,
+    )
     pyr_factor: bpy.props.FloatProperty(
         name="Pyramid Factor",
         description="Pyramid Downsample Factor.",
         min=0.1,
-        default=0.75)
+        default=0.75,
+    )
     alpha: bpy.props.FloatProperty(
         name="Completeness Alpha",
         description="Alpha Value for Completeness/Diversity Trade-off.",
-        default=0.05)
+        default=0.05,
+    )
     loop: bpy.props.BoolProperty(
-        name="Endless Loop",
-        description="Whether to Use Loop Constrain.",
-        default=False)
+        name="Endless Loop", description="Whether to Use Loop Constrain.", default=False
+    )
     num_steps: bpy.props.IntProperty(
-        name="Num of Steps",
-        description="Number of Optimized Steps.",
-        default=5)
+        name="Num of Steps", description="Number of Optimized Steps.", default=5
+    )
 
 
 classes = [
