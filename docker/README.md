@@ -8,17 +8,17 @@ Before you can use this Docker environment, you need to have the following:
 
 
 ### Build and Run
-1. Build docker image:
+1. Navigate to the GENMM root directory
    ```sh
-   docker build -t GenMM:latest .
+   cd path_to_GENMM_folder
    ```
-2. Start the docker container:
+2. Build docker image:
    ```sh
-   docker run --gpus all -it GenMM:latest /bin/bash
+   docker build -f docker/Dockerfile -t genmm:latest .
    ```
-3. Clone the repository:
+3. Start the docker container:
    ```sh
-   git clone git@github.com:wyysf-98/GenMM.git
+   docker run --gpus all --name genmm -it genmm:latest /bin/bash
    ```
 
 ## Troubleshooting
